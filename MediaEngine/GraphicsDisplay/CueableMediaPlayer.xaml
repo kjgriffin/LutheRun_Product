@@ -1,0 +1,22 @@
+﻿<UserControl x:Class="MediaEngine.GraphicsDisplay.CueableMediaPlayer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MediaEngine.GraphicsDisplay"
+             xmlns:ffme="clr-namespace:Unosquare.FFME;assembly=ffme.win"
+             mc:Ignorable="d" 
+             d:DesignHeight="1080" d:DesignWidth="1920">
+    <Grid>
+        <Grid Name="grid_display">
+            <Rectangle Name="rect_display" Panel.ZIndex="1"></Rectangle>
+            <Rectangle Fill="Black"></Rectangle>
+        </Grid>
+        <Viewbox Stretch="Uniform">
+            <Grid Name="grid_elements" Visibility="Hidden">
+                <ffme:MediaElement Name="clip_a" Background="Black" Width="1920"></ffme:MediaElement>
+                <ffme:MediaElement Name="clip_b" Background="Black" Width="1920"></ffme:MediaElement>
+            </Grid>
+        </Viewbox>
+    </Grid>
+</UserControl>
