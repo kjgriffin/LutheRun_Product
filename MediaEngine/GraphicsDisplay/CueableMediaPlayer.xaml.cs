@@ -197,6 +197,7 @@ namespace MediaEngine.GraphicsDisplay
             {
                 try
                 {
+                    OnCuePresetStateChanged?.Invoke(ICueableMediaPlayer.CueStatus.Uncued);
                     await Dispatcher.Invoke(() => m_presetPlayer.Open(source));
                 }
                 catch (Exception)

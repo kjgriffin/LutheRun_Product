@@ -76,9 +76,12 @@ namespace MediaEngine
 
         private void Qplayer_OnCuePresetStateChanged(ICueableMediaPlayer.CueStatus status)
         {
-            r_uncued.Visibility = status == ICueableMediaPlayer.CueStatus.Uncued ? Visibility.Visible : Visibility.Hidden;
-            r_queuing.Visibility = status == ICueableMediaPlayer.CueStatus.Cueing ? Visibility.Visible : Visibility.Hidden;
-            r_queued.Visibility = status == ICueableMediaPlayer.CueStatus.Cued ? Visibility.Visible : Visibility.Hidden;
+            Dispatcher.Invoke(() =>
+            {
+                r_uncued.Visibility = status == ICueableMediaPlayer.CueStatus.Uncued ? Visibility.Visible : Visibility.Hidden;
+                r_queuing.Visibility = status == ICueableMediaPlayer.CueStatus.Cueing ? Visibility.Visible : Visibility.Hidden;
+                r_queued.Visibility = status == ICueableMediaPlayer.CueStatus.Cued ? Visibility.Visible : Visibility.Hidden;
+            });
         }
 
         private async Task Preload()
