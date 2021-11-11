@@ -1,0 +1,20 @@
+﻿<Window x:Class="MediaEngine.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MediaEngine"
+        xmlns:ffme="clr-namespace:Unosquare.FFME;assembly=ffme.win"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800" PreviewKeyDown="Window_PreviewKeyDown">
+    <Grid>
+        <ffme:MediaElement Name="ffplayer"></ffme:MediaElement>
+        <Grid Name="grid_main">
+            <TextBlock Name="tbtime" Panel.ZIndex="20" FontSize="100" Foreground="orange" VerticalAlignment="Center" HorizontalAlignment="Center"></TextBlock>
+            <Rectangle Width="50" Height="50" Fill="Red" Name="r_uncued" Panel.ZIndex="10"></Rectangle> 
+            <Rectangle Width="50" Height="50" Fill="Yellow" Name="r_queuing" Panel.ZIndex="10"></Rectangle> 
+            <Rectangle Width="50" Height="50" Fill="Green" Name="r_queued" Panel.ZIndex="10"></Rectangle> 
+        </Grid>
+
+    </Grid>
+</Window>

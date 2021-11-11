@@ -10,7 +10,7 @@ namespace MediaEngine.GraphicsDisplay
     public interface ICueableMediaPlayer
     {
         public delegate void VisualOutputChanged(VisualBrush current, VisualBrush preset);
-        public delegate void MediaPlaybackPositionUpdateArgs(TimeSpan current, TimeSpan duration);
+        public delegate void MediaPlaybackPositionUpdateArgs(TimeSpan? current, TimeSpan? remaining, TimeSpan? duration);
         public delegate void CueStateUpdateArgs(CueStatus status);
 
         public event VisualOutputChanged OnVisualOutputChanged;
@@ -22,13 +22,15 @@ namespace MediaEngine.GraphicsDisplay
 
         public bool EnableLoopingPlayback { get; set; }
 
-        public void CuePreset(Uri source);
+        public Task CuePreset(Uri source);
         public void SwapCurrentWithPreset();
 
-        public void PlayCurrent();
-        public void PauseCurrent();
-        public void StopCurrent();
-        public void RestartCurrent();
+        public Task PlayCurrent();
+        public Task SeekCurrent(TimeSpan time);
+        public Task AdvanceCurrent(TimeSpan offset);
+        public Task PauseCurrent();
+        public Task StopCurrent();
+        public Task RestartCurrent();
 
         public void MuteCurrent();
         public void SetCurrentAudioLevel(double level = 1);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 using Unosquare.FFME.Common;
 
@@ -20,8 +22,11 @@ namespace MediaEngine.GraphicsDisplay
     /// <summary>
     /// Interaction logic for CueableMediaPlayer.xaml
     /// </summary>
-    public partial class CueableMediaPlayer : UserControl, ICueableMediaPlayer
+    public partial class CueableMediaPlayer : UserControl //, ICueableMediaPlayer
     {
+
+        private DispatcherTimer m_lowResTimer;
+        private DispatcherTimer m_highResTime;
 
         private VisualBrush brush_clipA;
         private VisualBrush brush_clipB;
@@ -46,7 +51,6 @@ namespace MediaEngine.GraphicsDisplay
             ClipB,
         }
 
-
         public CueableMediaPlayer()
         {
             InitializeComponent();
@@ -59,6 +63,32 @@ namespace MediaEngine.GraphicsDisplay
             clip_b.MediaOpened += Clip_b_MediaOpened;
             clip_b.MediaReady += Clip_b_MediaReady;
             clip_b.MediaEnded += Clip_b_MediaEnded;
+
+            m_lowResTimer = new DispatcherTimer();
+            m_lowResTimer.Interval = TimeSpan.FromMilliseconds(500);
+            m_lowResTimer.Tick += M_lowResTimer_Tick;
+            m_lowResTimer.Start();
+
+            m_highResTime = new DispatcherTimer();
+            m_highResTime.Interval = TimeSpan.FromMilliseconds(16);
+            m_highResTime.Tick += M_highResTime_Tick;
+            //m_highResTime.Start();
+        }
+
+        private void M_highResTime_Tick(object sender, EventArgs e)
+        {
+            if (m_currentPlayer.IsPlaying)
+            {
+                OnCurrentPlaybackPositionChanged?.Invoke(m_currentPlayer?.Position, m_currentPlayer?.RemainingDuration, m_currentPlayer?.NaturalDuration);
+            }
+        }
+
+        private void M_lowResTimer_Tick(object sender, EventArgs e)
+        {
+            if (m_currentPlayer.IsPlaying)
+            {
+                OnCurrentPlaybackPositionChanged?.Invoke(m_currentPlayer?.Position, m_currentPlayer?.RemainingDuration, m_currentPlayer?.NaturalDuration);
+            }
         }
 
         private void Clip_b_MediaEnded(object sender, EventArgs e)
@@ -129,13 +159,52 @@ namespace MediaEngine.GraphicsDisplay
             }
         }
 
+        private bool __useHighResTimers = false;
+        public bool UseHighResPositionTimer
+        {
+            get => __useHighResTimers;
+            set
+            {
+                __useHighResTimers = value;
+                if (value)
+                {
+                    m_lowResTimer.Stop();
+                    m_highResTime.Start();
+                }
+                else
+                {
+                    m_highResTime.Stop();
+                    m_lowResTimer.Start();
+                }
+            }
+        }
+
         public event ICueableMediaPlayer.VisualOutputChanged OnVisualOutputChanged;
         public event ICueableMediaPlayer.CueStateUpdateArgs OnCuePresetStateChanged;
         public event ICueableMediaPlayer.MediaPlaybackPositionUpdateArgs OnCurrentPlaybackPositionChanged;
 
-        public async void CuePreset(Uri source)
+        public void HotLoadCurrent(Uri source)
         {
-            await m_presetPlayer.Open(source);
+            Dispatcher.BeginInvoke(() =>
+            {
+                m_currentPlayer.Open(source);
+            });
+        }
+
+        public async Task CuePreset(Uri source)
+        {
+            await Dispatcher.BeginInvoke(async () =>
+            {
+                try
+                {
+                    await Dispatcher.Invoke(() => m_presetPlayer.Open(source));
+                }
+                catch (Exception)
+                {
+                    Debugger.Break();
+                    throw;
+                }
+            });
         }
 
         public void MuteCurrent()
@@ -143,17 +212,28 @@ namespace MediaEngine.GraphicsDisplay
             audioLevel = 0;
         }
 
-        public async void PauseCurrent()
+        public async Task PauseCurrent()
         {
             await m_currentPlayer.Pause();
         }
 
-        public async void PlayCurrent()
+        public async Task PlayCurrent()
         {
-            await m_currentPlayer.Play();
+            await Dispatcher.BeginInvoke(async () =>
+            {
+                try
+                {
+                    await Dispatcher.Invoke(() => m_currentPlayer.Play());
+                }
+                catch (Exception)
+                {
+                    Debugger.Break();
+                    throw;
+                }
+            });
         }
 
-        public async void RestartCurrent()
+        public async Task RestartCurrent()
         {
             await m_currentPlayer.Seek(TimeSpan.FromMilliseconds(0));
             await m_currentPlayer.Play();
@@ -164,16 +244,37 @@ namespace MediaEngine.GraphicsDisplay
             audioLevel = level;
         }
 
-        public async void StopCurrent()
+        public async Task StopCurrent()
         {
             await m_currentPlayer.Stop();
         }
 
-        public void SwapCurrentWithPreset()
+        public async Task SwapCurrentWithPreset()
         {
-            m_currentSource = m_currentSource != Bus.ClipA ? Bus.ClipA : Bus.ClipB;
-            rect_display.Fill = CurrentOutput;
+            await Dispatcher.BeginInvoke(async () =>
+            {
+                m_lowResTimer.Stop();
+                m_highResTime.Stop();
+                m_currentSource = m_currentSource != Bus.ClipA ? Bus.ClipA : Bus.ClipB;
+                rect_display.Fill = CurrentOutput;
+                if (m_presetPlayer.CanPause)
+                {
+                    await Dispatcher.Invoke(() => m_presetPlayer.Pause());
+                }
+            });
             OnVisualOutputChanged?.Invoke(CurrentOutput, PresetOutput);
+        }
+
+        public async Task SeekCurrent(TimeSpan time)
+        {
+            await m_currentPlayer.Seek(time);
+            OnCurrentPlaybackPositionChanged?.Invoke(m_currentPlayer?.Position, m_currentPlayer?.RemainingDuration, m_currentPlayer?.NaturalDuration);
+        }
+
+        public async Task AdvanceCurrent(TimeSpan offset)
+        {
+            await m_currentPlayer.Seek(m_currentPlayer.Position.Add(offset));
+            OnCurrentPlaybackPositionChanged?.Invoke(m_currentPlayer?.Position, m_currentPlayer?.RemainingDuration, m_currentPlayer?.NaturalDuration);
         }
     }
 }
